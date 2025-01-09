@@ -4,7 +4,7 @@ import numpy as np
 import sys, string, os, re
 from pyproj import Proj
 from pyresample import kd_tree, geometry
-def emit2tiff(pathname):
+def emit2hdr(pathname):
     dataset = nc.Dataset(pathname)
     lon=dataset['location/lon'][:].data
     lat=dataset['location/lat'][:].data
