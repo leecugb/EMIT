@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 import netCDF4 as nc
 from osgeo import gdal, osr, ogr
 import numpy as np
@@ -22,7 +16,6 @@ def emit2tiff(pathname):
     spectrum[spectrum==-9999]=0
     name=os.path.splitext(os.path.split(pathname)[1])[0]
     folder=os.path.split(pathname)[0]
-    f=open(folder+'/'+name+'.bands','w')
     p=Proj('+proj=utm +zone='+int(np.ceil(lon.mean()/6)+30).__str__() +' datum=WGS84 +units=m +no_defs')
     extent=[*p(lon.min(),lat.min()-0.05),*p(lon.max(),lat.max())]
     area_def = geometry.AreaDefinition('areaD', 'custom', 'areaD',
@@ -32,19 +25,18 @@ def emit2tiff(pathname):
     swath_def = geometry.SwathDefinition(lons=lon, lats=lat)
     result = kd_tree.resample_nearest(swath_def,     (spectrum*10000).astype('uint16')  ,
                                 area_def, radius_of_influence=90)
-    r1,c1,s1=result.shape
+    rows,columns,samples=result.shape
     driver = gdal.GetDriverByName('ENVI')
-    raster = driver.Create(folder+'/'+name+'_', c1,r1,s1 ,gdal.GDT_UInt16)
+    raster = driver.Create(folder+'/'+name+'_', columns,rows,samples,gdal.GDT_UInt16)
     raster.SetMetadataItem('AREA_OR_POINT', 'Point')
     raster.SetGeoTransform((extent[0],60,0,extent[-1],0,-60))
     raster.SetProjection('+proj=utm +zone='+int(np.ceil(lon.mean()/6)+30).__str__() +' datum=WGS84 +units=m +no_defs')
-    for i in range(s1):
+    for i in range(samples):
         raster.GetRasterBand(i+1).WriteArray(result[:,:,i])
         raster.FlushCache()
     raster=None
-    g=open(folder+'/'+name+'_.hdr','a')
-    g.write('\nwavelength = {\n'+  ', '.join([str(i) for i in w])     +'}')
-    g.write('\nfwhm = {\n'+  ', '.join([str(i) for i in bp])    +'}')
-    g.write('\nwavelength units = Micrometers')
-    g.close()
-
+    with open(folder+'/'+name+'_.hdr','a') as f:
+        f.write('\nwavelength = {\n'+  ', '.join([str(i) for i in w])     +'}')
+        f.write('\nfwhm = {\n'+  ', '.join([str(i) for i in bp])    +'}')
+        f.write('\nwavelength units = Micrometers')
+        f.close()
