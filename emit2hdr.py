@@ -39,4 +39,5 @@ def emit2hdr(pathname):
         f.write('\nwavelength = {\n'+  ', '.join([str(i) for i in w])     +'}')
         f.write('\nfwhm = {\n'+  ', '.join([str(i) for i in bp])    +'}')
         f.write('\nwavelength units = Micrometers')
+        f.write('\nreflectance scale factor = 10000.000000')
         f.close()
